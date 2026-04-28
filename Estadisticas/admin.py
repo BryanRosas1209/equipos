@@ -1,9 +1,18 @@
 from django.contrib import admin
-from .models import Equipo, Jugador, EstadisticaJugador, Trofeo
+from .models import Equipo, Jugador, EstadisticaJugador, Trofeo, Liga
+
+@admin.register(Liga)
+class LigaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'pais')
 
 @admin.register(Equipo)
 class EquipoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'ciudad')
+    # Ahora mostramos la liga en la lista de equipos
+    list_display = ('nombre', 'ciudad', 'liga')
+    list_filter = ('liga',) # Filtro lateral por liga
+    search_fields = ('nombre',)
+
+# ... (El resto de tus registros Admin se quedan igual)
 
 @admin.register(Jugador)
 class JugadorAdmin(admin.ModelAdmin):

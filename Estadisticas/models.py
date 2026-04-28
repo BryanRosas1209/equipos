@@ -1,11 +1,26 @@
 from django.db import models
 
-class Equipo(models.Model):
-    nombre = models.CharField(max_length=100, default="Nombre provisional")
-    ciudad = models.CharField(max_length=100, default="Ciudad desconocida")
+class Liga(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+    pais = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Liga"
+        verbose_name_plural = "Ligas"
 
     def __str__(self):
         return self.nombre
+
+class Equipo(models.Model):
+    nombre = models.CharField(max_length=100, default="Nombre provisional")
+    ciudad = models.CharField(max_length=100, default="Ciudad desconocida")
+    # Agregamos la relación con Liga
+    liga = models.ForeignKey(Liga, on_delete=models.SET_NULL, null=True, blank=True, related_name='equipos')
+
+    def __str__(self):
+        return self.nombre
+
+# ... (Tus otros modelos Jugador, EstadisticaJugador, Trofeo se quedan igual)
 
 class Jugador(models.Model):
     nombre = models.CharField(max_length=100, default="Jugador Anónimo")
