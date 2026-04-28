@@ -1,16 +1,20 @@
 from django.contrib import admin
-from .models import Equipo, Jugador, Trofeo
+from .models import Equipo, Jugador, EstadisticaJugador, Trofeo
 
 @admin.register(Equipo)
 class EquipoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'ciudad') # Columnas que verás en la lista
-    search_fields = ('nombre',)        # Barra de búsqueda
+    list_display = ('nombre', 'ciudad')
 
 @admin.register(Jugador)
 class JugadorAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'posicion', 'equipo', 'goles')
-    list_filter = ('equipo', 'posicion') # Filtros laterales
+    list_display = ('nombre', 'posicion', 'equipo')
 
 @admin.register(Trofeo)
 class TrofeoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'anio')
+    # Esta es tu sección de Títulos / Palmarés
+    list_display = ('nombre', 'anio', 'equipo')
+    list_filter = ('equipo',)
+
+@admin.register(EstadisticaJugador)
+class EstadisticaJugadorAdmin(admin.ModelAdmin):
+    list_display = ('jugador', 'goles', 'asistencias', 'partidos_jugados')
