@@ -1,29 +1,39 @@
 from django.contrib import admin
-from .models import Equipo, Jugador, EstadisticaJugador, Trofeo, Liga
+from .models import User, Liga, Equipo, Jugador, Partido, EstadisticaPartido, Trofeo
+
+# Inline para ver jugadores dentro de un equipo
+class JugadorInline(admin.TabularInline):
+    model = Jugador
+    extra = 1
+
+# Inline para registrar estadísticas dentro de un partido (Estilo CartItem)
+class EstadisticaPartidoInline(admin.TabularInline):
+    model = EstadisticaPartido
+    extra = 2 # Espacios vacíos para llenar rápido
+
+@admin.register(Equipo)
+class EquipoAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'liga', 'ciudad')
+    list_filter = ('liga',)
+    inlines = [JugadorInline]
+
+@admin.register(Partido)
+class PartidoAdmin(admin.ModelAdmin):
+    list_display = ('equipo_local', 'equipo_visitante', 'fecha')
+    inlines = [EstadisticaPartidoInline] # Aquí llenas los goles del partido
+
+@admin.register(Jugador)
+class JugadorAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'equipo', 'posicion')
+    search_fields = ('nombre',)
 
 @admin.register(Liga)
 class LigaAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'pais')
 
-@admin.register(Equipo)
-class EquipoAdmin(admin.ModelAdmin):
-    # Ahora mostramos la liga en la lista de equipos
-    list_display = ('nombre', 'ciudad', 'liga')
-    list_filter = ('liga',) # Filtro lateral por liga
-    search_fields = ('nombre',)
-
-# ... (El resto de tus registros Admin se quedan igual)
-
-@admin.register(Jugador)
-class JugadorAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'posicion', 'equipo')
-
 @admin.register(Trofeo)
 class TrofeoAdmin(admin.ModelAdmin):
-    # Esta es tu sección de Títulos / Palmarés
     list_display = ('nombre', 'anio', 'equipo')
     list_filter = ('equipo',)
 
-@admin.register(EstadisticaJugador)
-class EstadisticaJugadorAdmin(admin.ModelAdmin):
-    list_display = ('jugador', 'goles', 'asistencias', 'partidos_jugados')
+admin.site.register(User)
