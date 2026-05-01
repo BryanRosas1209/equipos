@@ -2,11 +2,11 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+# 👤 Usuario Personalizado
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     is_editor = models.BooleanField(default=False)
 
-    # Agregamos estos related_name para evitar el choque de nombres
     groups = models.ManyToManyField(
         'auth.Group',
         related_name='estadisticas_user_groups',
@@ -18,7 +18,7 @@ class User(AbstractUser):
         blank=True
     )
 
-# 🏆 Liga (Como tus Categorías)
+# 🏆 Liga
 class Liga(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=100, unique=True)
@@ -30,12 +30,13 @@ class Liga(models.Model):
     def __str__(self):
         return self.nombre
 
-# 🛡️ Equipo
+# 🛡️ Equipo (Incluye Escudo)
 class Equipo(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=150)
     ciudad = models.CharField(max_length=100)
     liga = models.ForeignKey(Liga, on_delete=models.SET_NULL, null=True, related_name='equipos')
+    escudo = models.ImageField(upload_to='escudos/', null=True, blank=True) # <-- PARA LAS FOTOS
 
     def __str__(self):
         return self.nombre
@@ -47,21 +48,29 @@ class Jugador(models.Model):
     posicion = models.CharField(max_length=50)
     equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name='jugadores')
 
+    # ¡ESTO DEBE ESTAR ADENTRO! (Con 4 espacios de sangría)
+    class Meta:
+        verbose_name = "Jugador"
+        verbose_name_plural = "Jugadores"
+
     def __str__(self):
         return self.nombre
 
-# 📅 Partido (Nuevo concepto clave)
+# 📅 Partido (Incluye Goles/Marcador)
 class Partido(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     fecha = models.DateTimeField()
     equipo_local = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name='partidos_local')
     equipo_visitante = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name='partidos_visitante')
+    # CAMPOS DE GOLES PARA EL HOME
+    goles_local = models.PositiveIntegerField(default=0)
+    goles_visitante = models.PositiveIntegerField(default=0)
     torneo = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
-        return f"{self.equipo_local} vs {self.equipo_visitante} - {self.fecha.strftime('%d/%m/%y')}"
+        return f"{self.equipo_local} {self.goles_local} - {self.goles_visitante} {self.equipo_visitante}"
 
-# 📊 Desempeño (Esta es tu tabla intermedia estilo "CartItem")
+# 📊 Estadísticas Individuales
 class EstadisticaPartido(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     jugador = models.ForeignKey(Jugador, on_delete=models.CASCADE, related_name='rendimiento_partidos')
@@ -73,9 +82,9 @@ class EstadisticaPartido(models.Model):
     rojas = models.PositiveIntegerField(default=0)
 
     class Meta:
-        unique_together = ('jugador', 'partido') # Evita duplicar datos del mismo jugador en un partido
+        unique_together = ('jugador', 'partido')
 
-# 🥇 Título / Trofeo
+# 🥇 Trofeo
 class Trofeo(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nombre = models.CharField(max_length=100)
