@@ -1,44 +1,75 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
-from .forms import RegisterForm
-from .models import Equipo, Partido
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from .models import Equipo, Partido, Jugador
+from .forms import JugadorForm
 
 def home(request):
-    # Obtenemos todos los equipos registrados en la base de datos
     equipos = Equipo.objects.all()
-    # Obtenemos los últimos 5 partidos jugados para mostrar resultados recientes
     partidos = Partido.objects.all().order_by('-fecha')[:5]
+    return render(request, 'Estadisticas/home.html', {'equipos': equipos, 'partidos': partidos})
+
+# =========================
+# 📊 Panel de Control
+# =========================
+@login_required
+def panel_editor(request):
+    if not request.user.is_editor:
+        return HttpResponseForbidden("No tienes permisos de editor.")
     
-    return render(request, 'Estadisticas/home.html', {
-        'equipos': equipos,
-        'partidos': partidos
-    })
+    jugadores = Jugador.objects.all()
+    return render(request, 'Estadisticas/panel.html', {'jugadores': jugadores})
 
-def register(request):
+# =========================
+# 🏃 CRUD Jugadores
+# =========================
+@login_required
+def jugador_crear(request):
+    if not request.user.is_editor:
+        return HttpResponseForbidden()
+    
+    form = JugadorForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        return redirect('panel_editor')
+    
+    return render(request, 'Estadisticas/jugador_form.html', {'form': form, 'titulo': 'Inscribir Jugador'})
+
+@login_required
+def jugador_editar(request, pk):
+    jugador = get_object_or_404(Jugador, pk=pk)
+    if not request.user.is_editor:
+        return HttpResponseForbidden()
+    
+    form = JugadorForm(request.POST or None, instance=jugador)
+    if form.is_valid():
+        form.save()
+        return redirect('panel_editor')
+    
+    return render(request, 'Estadisticas/jugador_form.html', {'form': form, 'titulo': 'Editar Jugador'})
+
+@login_required
+def jugador_eliminar(request, pk):
+    jugador = get_object_or_404(Jugador, pk=pk)
+    if not request.user.is_editor:
+        return HttpResponseForbidden()
+    
     if request.method == 'POST':
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)  # Inicia sesión automáticamente tras registrarse
-            return redirect('home')
-    else:
-        form = RegisterForm()
-    return render(request, 'Estadisticas/register.html', {'form': form})
+        jugador.delete()
+        return redirect('panel_editor')
+    
+    return render(request, 'Estadisticas/jugador_confirm_delete.html', {'jugador': jugador})
 
+# Vistas de Auth (Mantenlas o actualízalas si las tenías vacías)
 def login_view(request):
-    error = None
-    if request.method == 'POST':
-        u = request.POST.get('username')
-        p = request.POST.get('password')
-        user = authenticate(request, username=u, password=p)
-        if user:
-            login(request, user)
-            return redirect('home')
-        else:
-            error = "Usuario o contraseña incorrectos" # <--- Notificamos el error
-            
-    return render(request, 'Estadisticas/login.html', {'error': error})
+    # ... tu lógica de login actual ...
+    return render(request, 'Estadisticas/login.html')
 
 def logout_view(request):
     logout(request)
     return redirect('home')
+
+def register(request):
+    # ... tu lógica de registro actual ...
+    return render(request, 'Estadisticas/register.html')

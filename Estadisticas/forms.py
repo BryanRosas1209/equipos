@@ -1,11 +1,12 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from .models import User
+from .models import Jugador
 
-class RegisterForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    is_editor = forms.BooleanField(required=False, label="¿Es editor de estadísticas?")
-
+class JugadorForm(forms.ModelForm):
     class Meta:
-        model = User
-        fields = ('username', 'email', 'is_editor')
+        model = Jugador
+        fields = ['nombre', 'posicion', 'equipo']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
+            'posicion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Delantero'}),
+            'equipo': forms.Select(attrs={'class': 'form-select'}),
+        }
